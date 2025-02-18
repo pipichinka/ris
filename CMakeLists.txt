@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.12...3.31)
-project(service_template CXX)
+project(ris CXX)
 
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DownloadUserver)
@@ -12,13 +12,36 @@ endif()
 
 userver_setup_environment()
 
+file(GLOB_RECURSE SCHEMAS ${CMAKE_CURRENT_SOURCE_DIR}/src/dto/*.yaml)
+userver_target_generate_chaotic(${PROJECT_NAME}-chgen
+        ARGS
+        # Map '/components/schemas/*' JSONSchema types to C++ types in 'dto::' namespace
+        -n "/components/schemas/([^/]*)/=dto::{0}"
+        # Generate serializers for responses
+        --generate-serializers
+        OUTPUT_DIR
+        ${CMAKE_CURRENT_BINARY_DIR}
+        SCHEMAS
+        ${SCHEMAS}
+        RELATIVE_TO
+        ${CMAKE_CURRENT_SOURCE_DIR}
+)
 
 # Common sources
 add_library(${PROJECT_NAME}_objs OBJECT
     src/hello.hpp
     src/hello.cpp
 )
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core)
+
+add_library(${PROJECT_NAME}_task OBJECT
+        src/task/Md5PartSolver.cpp
+        src/task/Md5PartSolver.h
+
+)
+
+target_link_libraries(${PROJECT_NAME}_task PUBLIC userver::core)
+
+target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core ${PROJECT_NAME}-chgen ${PROJECT_NAME}_task)
 
 
 # The Service
@@ -29,8 +52,9 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 # Unit Tests
 add_executable(${PROJECT_NAME}_unittest
     src/hello_test.cpp
+        src/tests/md5_task.cpp
 )
-target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs userver::utest)
+target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs ${PROJECT_NAME}_task userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
 
 

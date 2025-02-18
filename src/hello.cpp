@@ -3,6 +3,7 @@
 #include <fmt/format.h>
 
 #include <userver/server/handlers/http_handler_base.hpp>
+#include <userver/crypto/hash.hpp>
 
 namespace service_template {
 
@@ -17,7 +18,7 @@ public:
   std::string HandleRequestThrow(
       const userver::server::http::HttpRequest &request,
       userver::server::request::RequestContext &) const override {
-    return service_template::SayHelloTo(request.GetArg("name"));
+    return SayHelloTo(request.GetArg("name"));
   }
 };
 

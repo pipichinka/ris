@@ -1,0 +1,47 @@
+components:
+  schemas:
+    WorkerLaunchTaskRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        hash:
+          type: string
+        start:
+          type: string
+        count:
+          type: integer
+          format: int64
+      required: [hash, start, count]
+    WorkerLaunchTaskResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        task_id:
+          type: string
+          format: uuid
+      required: [task_id]
+    WorkerStatusTaskRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        task_id:
+          type: string
+          format: uuid
+      required: [task_id]
+    WorkerStatusTaskResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        result:
+          type: string
+        status:
+          type: string
+      required: [status]
+    WorkerKillTaskRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        task_id:
+          type: string
+          format: uuid
+      required: [task_id]

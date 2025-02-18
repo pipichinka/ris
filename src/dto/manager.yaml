@@ -1,0 +1,29 @@
+components:
+  schemas:
+    ManagerSolveRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        hash:
+          type: string
+        length:
+          type: integer
+          format: int64
+      required: [hash, length]
+    ManagerSolveResponse:
+      type: object
+      additionalProperties: false
+      properties:
+        task_id:
+          type: string
+          format: uuid
+      required: [task_id]
+    ManagerStatusRequest:
+      type: object
+      additionalProperties: false
+      properties:
+        result:
+          type: string
+        status:
+          type: string
+      required: [status]

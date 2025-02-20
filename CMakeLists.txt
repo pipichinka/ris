@@ -36,10 +36,18 @@ add_library(${PROJECT_NAME}_objs OBJECT
 add_library(${PROJECT_NAME}_task OBJECT
         src/task/Md5PartSolver.cpp
         src/task/Md5PartSolver.h
+)
+
+add_library(${PROJECT_NAME}_worker OBJECT
+        src/worker/BackgroundTaskProcessor.cpp
+        src/worker/BackgroundTaskProcessor.h
 
 )
 
 target_link_libraries(${PROJECT_NAME}_task PUBLIC userver::core)
+
+target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core)
+target_include_directories(${PROJECT_NAME}_worker PUBLIC src)
 
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core ${PROJECT_NAME}-chgen ${PROJECT_NAME}_task)
 
@@ -48,12 +56,16 @@ target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core ${PROJECT_NAME}-
 add_executable(${PROJECT_NAME} src/main.cpp)
 target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 
+add_executable(worker_service src/worker/main.cpp)
+target_link_libraries(worker_service PRIVATE ${PROJECT_NAME}_worker)
+
 
 # Unit Tests
 add_executable(${PROJECT_NAME}_unittest
-    src/hello_test.cpp
+        src/hello_test.cpp
         src/tests/md5_task.cpp
 )
+target_include_directories(${PROJECT_NAME}_unittest PUBLIC src)
 target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs ${PROJECT_NAME}_task userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
 

@@ -14,6 +14,7 @@ struct Md5Part{
   std::int64_t count;
   Md5Part(std::string  hash, std::string  start, std::int64_t count)
       : hash(std::move(hash)), start(std::move(start)), count(count) {}
+  [[nodiscard]] bool isValid() const;
 };
 
 std::vector<Md5Part> makeMd5Parts(const std::string& hash, std::int64_t len);
@@ -21,9 +22,9 @@ std::vector<Md5Part> makeMd5Parts(const std::string& hash, std::int64_t len);
 class Md5PartSolver{
   public:
   explicit Md5PartSolver(Md5Part&& part);
+  explicit Md5PartSolver(const Md5Part& part);
 
   bool solve();
-  void cancel() { mCancelled = true; }
   [[nodiscard]] bool isCancelled() const { return mCancelled; }
   [[nodiscard]] const std::string& result() const {return result_;}
 

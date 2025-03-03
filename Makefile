@@ -1,7 +1,7 @@
-PROJECT_NAME = service_template
+PROJECT_NAME = ris
 NPROCS ?= $(shell nproc)
 CLANG_FORMAT ?= clang-format
-DOCKER_COMPOSE ?= docker-compose
+DOCKER_COMPOSE ?= sudo docker-compose
 PRESETS ?= debug release debug-custom release-custom
 
 .PHONY: all
@@ -75,6 +75,7 @@ $(addprefix docker-start-, $(PRESETS)): docker-start-%:
 # Start specific target in docker environment
 .PHONY: $(addprefix docker-cmake-, $(PRESETS)) $(addprefix docker-build-, $(PRESETS)) $(addprefix docker-test-, $(PRESETS)) $(addprefix docker-clean-, $(PRESETS)) $(addprefix docker-install-, $(PRESETS))
 $(addprefix docker-cmake-, $(PRESETS)) $(addprefix docker-build-, $(PRESETS)) $(addprefix docker-test-, $(PRESETS)) $(addprefix docker-clean-, $(PRESETS)) $(addprefix docker-install-, $(PRESETS)): docker-%:
+	$(DOCKER_COMPOSE) exec -u root --rm $(PROJECT_NAME)-container  apt install clang-format
 	$(DOCKER_COMPOSE) run --rm $(PROJECT_NAME)-container make $*
 
 # Stop docker container and cleanup data

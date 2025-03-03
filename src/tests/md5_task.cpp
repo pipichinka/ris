@@ -21,7 +21,7 @@ static const std::string hash_start_4 = userver::crypto::hash::weak::Md5("aaaa")
 
 static const std::string hash_end_4 = userver::crypto::hash::weak::Md5("0000");
 
-static const std::string hash_large = userver::crypto::hash::weak::Md5("aaaaaaaaa");
+static const std::string hash_large = userver::crypto::hash::weak::Md5("aaaaaaa");
 
 using namespace task;
 
@@ -82,5 +82,5 @@ UTEST(test_generate_md5_task_parts, test_end_4) {
 }
 
 UTEST(test_generate_md5_task_parts, test_large) {
-  generic_md5_task_test(hash_large, "aaaaaaaaa", 62);
+  generic_md5_task_test(hash_large, "aaaaaaa", 14776336);
 }

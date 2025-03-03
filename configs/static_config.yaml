@@ -6,6 +6,8 @@ components_manager:
 
         fs-task-processor:            # Make a separate task processor for filesystem bound tasks.
             worker_threads: 1
+        md5-task-processor:
+            worker_threads: 1
 
     default_task_processor: main-task-processor
 
@@ -31,6 +33,8 @@ components_manager:
 
         testsuite-support: {}
 
+        background-task-processor: {}
+
         http-client:
             load-enabled: true
             fs-task-processor: fs-task-processor
@@ -50,7 +54,19 @@ components_manager:
             throttling_enabled: false
             url_trailing_slash: strict-match
 
-        handler-hello:                    # Finally! Our handler.
-            path: /hello                  # Registering handler by URL '/hello'.
-            method: GET,POST              # It will only reply to GET (HEAD) and POST requests.
-            task_processor: main-task-processor  # Run it on CPU bound task processor
+        #handler-hello:                    # Finally! Our handler.
+        #    path: /hello                  # Registering handler by URL '/hello'.
+        #    method: GET,POST              # It will only reply to GET (HEAD) and POST requests.
+        #    task_processor: main-task-processor  # Run it on CPU bound task processor
+        handler-worker-launch:
+            path: /task/launch
+            method: POST
+            task_processor: main-task-processor
+        handler-worker-status:
+            path: /task/status
+            method: GET
+            task_processor: main-task-processor
+        handler-worker-kill:
+            path: /task/kill
+            method: POST
+            task_processor: main-task-processor

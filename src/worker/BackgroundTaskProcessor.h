@@ -4,22 +4,27 @@
 #include <unordered_map>
 
 #include "task/Md5PartSolver.h"
+#include "userver/components/component_base.hpp"
+#include "userver/components/component_context.hpp"
 #include "userver/concurrent/variable.hpp"
-#include "userver/utils/boost_uuid4.hpp"
 #include "userver/engine/shared_mutex.hpp"
+#include "userver/utils/boost_uuid4.hpp"
 namespace worker {
 
 enum TaskResultType {IN_PROGRESS, FOUND, NOT_FOUND, CANCELED, NO_SUCH_TASK};
 
+std::string TaskResultTypeToString(TaskResultType type);
+
 struct TaskResult {
-  std::string result;
+  std::string result{};
   TaskResultType type;
   TaskResult(): type(IN_PROGRESS){}
 };
 
-class BackgroundTaskProcessor {
+class BackgroundTaskProcessor: public userver::components::ComponentBase{
 public:
   using TaskId = boost::uuids::uuid;
+  static constexpr std::string_view kName = "background-task-processor";
 
   struct StorageHash {
     size_t operator()(const TaskId& t) const noexcept {
@@ -29,18 +34,18 @@ public:
 
   using Storage = std::unordered_map<TaskId, TaskResult, StorageHash>;
 
-  explicit BackgroundTaskProcessor(userver::engine::TaskProcessor& taskProcessor);
+  explicit BackgroundTaskProcessor(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context);
 
-  bool addTask(const task::Md5Part& t);
-  bool cancelTaskById(const TaskId& id) const;
-  TaskResult getTaskResult(const TaskId& id) const;
+  boost::uuids::uuid* addTask(const task::Md5Part& t);
+  [[nodiscard]] bool cancelTaskById(const TaskId& id) const;
+  [[nodiscard]] TaskResult getTaskResult(const TaskId& id) const;
 
 private:
   void ProcessTask(const task::Md5Part& t,const TaskId& id);
   userver::concurrent::Variable<Storage, userver::engine::SharedMutex> storage;
   userver::engine::Task* task;
-  boost::uuids::uuid currentTaskUuid;
   userver::engine::TaskProcessor& taskProcessor;
+  TaskId currentTaskId;
 };
 
 } // worker

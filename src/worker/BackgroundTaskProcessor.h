@@ -21,6 +21,11 @@ struct TaskResult {
   TaskResult(): type(IN_PROGRESS){}
 };
 
+inline std::ostream& operator<<(std::ostream& s, const TaskResult& t) {
+  s << "type: " << TaskResultTypeToString(t.type) << ". result: " << t.result;
+  return s;
+}
+
 class BackgroundTaskProcessor: public userver::components::ComponentBase{
 public:
   using TaskId = boost::uuids::uuid;
@@ -28,22 +33,22 @@ public:
 
   struct StorageHash {
     size_t operator()(const TaskId& t) const noexcept {
-      return boost::uuids::hash_value(t);
+      return hash_value(t);
     }
   };
 
   using Storage = std::unordered_map<TaskId, TaskResult, StorageHash>;
 
   explicit BackgroundTaskProcessor(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context);
-
+  ~BackgroundTaskProcessor() override = default;
   boost::uuids::uuid* addTask(const task::Md5Part& t);
-  [[nodiscard]] bool cancelTaskById(const TaskId& id) const;
+  [[nodiscard]] bool cancelTaskById(const TaskId& id);
   [[nodiscard]] TaskResult getTaskResult(const TaskId& id) const;
 
 private:
   void ProcessTask(const task::Md5Part& t,const TaskId& id);
   userver::concurrent::Variable<Storage, userver::engine::SharedMutex> storage;
-  userver::engine::Task* task;
+  std::unique_ptr<userver::engine::Task> task;
   userver::engine::TaskProcessor& taskProcessor;
   TaskId currentTaskId;
 };

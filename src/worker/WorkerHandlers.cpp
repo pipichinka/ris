@@ -81,17 +81,12 @@ public:
       const userver::formats::json::Value& request_json,
       request::RequestContext& context) const override {
     const dto::WorkerStatusTaskRequest statusTaskDto = request_json.As<dto::WorkerStatusTaskRequest>();
-    LOG_INFO() << "hello 1";
     const auto result = taskProcessor.getTaskResult(statusTaskDto.task_id);
-    LOG_INFO() << "hello 2";
     if (result.type == FOUND) {
-      LOG_INFO() << "hello 3";
       dto::WorkerStatusTaskResponse response {.result = result.result, .status = TaskResultTypeToString(result.type)};
       return userver::formats::json::ValueBuilder(response).ExtractValue();
     }
-    LOG_INFO() << "hello 4";
     dto::WorkerStatusTaskResponse response {.status = TaskResultTypeToString(result.type)};
-    LOG_INFO() << "hello 5";
     return userver::formats::json::ValueBuilder(response).ExtractValue();
   }
 };
@@ -119,7 +114,7 @@ public:
 
     const auto result = taskProcessor.cancelTaskById(killTaskDto.task_id);
 
-    dto::DetailedResponse response {.detail = std::string("result is ") + (result ? "true" : "false") };
+    dto::DetailedResponse response {.detail = (result ? "task is canceled" : "task is finished or no such rask") };
     return userver::formats::json::ValueBuilder(response).ExtractValue();
   }
 };

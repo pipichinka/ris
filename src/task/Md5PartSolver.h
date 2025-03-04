@@ -5,6 +5,7 @@
 #include <cstdint>
 #include <utility>
 #include <vector>
+#include <iostream>
 
 namespace task {
 
@@ -16,6 +17,11 @@ struct Md5Part{
       : hash(std::move(hash)), start(std::move(start)), count(count) {}
   [[nodiscard]] bool isValid() const;
 };
+
+inline std::ostream& operator<<(std::ostream& s, const Md5Part& t) {
+  s << "hash: " << t.hash << ", start: " << t.start << ", count: " << t.count;
+  return s;
+}
 
 std::vector<Md5Part> makeMd5Parts(const std::string& hash, std::int64_t len);
 

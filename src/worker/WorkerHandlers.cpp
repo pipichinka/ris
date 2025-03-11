@@ -9,24 +9,11 @@
 #include "src/dto/worker.hpp"
 #include "userver/components/component_context.hpp"
 #include "userver/utils/log.hpp"
+#include "utils/HandlerUtils.h"
 
 using namespace worker;
 using namespace  userver::server;
 
-class DetailedErrorBuilder {
-public:
-  static constexpr bool kIsExternalBodyFormatted = true;
-
-  explicit DetailedErrorBuilder(std::string msg) {
-    dto::DetailedResponse response{.detail = std::move(msg)};
-    body = ToString(userver::formats::json::ValueBuilder(response).ExtractValue());
-  }
-
-  [[nodiscard]] std::string GetExternalBody() const { return body; }
-
-private:
-  std::string body;
-};
 
 class TaskLaunchHandler final : public handlers::HttpHandlerJsonBase {
 private:
@@ -46,9 +33,14 @@ public:
       const http::HttpRequest& request,
       const userver::formats::json::Value& request_json,
       request::RequestContext& context) const override {
-    const dto::WorkerLaunchTaskRequest launchTaskDto = request_json.As<dto::WorkerLaunchTaskRequest>();
+    const auto launchTaskDto = parseJson<dto::WorkerLaunchTaskRequest>(request_json);
+    const auto task = task::Md5Part(launchTaskDto.hash, launchTaskDto.start, launchTaskDto.count);
+    if (!task.isValid()) {
+      throw handlers::ClientError(
+        DetailedErrorBuilder{"invalid Md5 task"});
+    }
 
-    BackgroundTaskProcessor::TaskId* addTaskRes = taskProcessor.addTask(task::Md5Part(launchTaskDto.hash, launchTaskDto.start, launchTaskDto.count));
+    BackgroundTaskProcessor::TaskId* addTaskRes = taskProcessor.addTask(task);
 
     if (addTaskRes) {
       dto::WorkerLaunchTaskResponse response;
@@ -80,13 +72,13 @@ public:
       const http::HttpRequest& request,
       const userver::formats::json::Value& request_json,
       request::RequestContext& context) const override {
-    const dto::WorkerStatusTaskRequest statusTaskDto = request_json.As<dto::WorkerStatusTaskRequest>();
+    const auto statusTaskDto = parseJson<dto::WorkerStatusTaskRequest>(request_json);
     const auto result = taskProcessor.getTaskResult(statusTaskDto.task_id);
-    if (result.type == FOUND) {
-      dto::WorkerStatusTaskResponse response {.result = result.result, .status = TaskResultTypeToString(result.type)};
+    if (result.type == task::FOUND) {
+      dto::WorkerStatusTaskResponse response {.result = result.result, .status = std::string(TaskResultTypeToString(result.type))};
       return userver::formats::json::ValueBuilder(response).ExtractValue();
     }
-    dto::WorkerStatusTaskResponse response {.status = TaskResultTypeToString(result.type)};
+    dto::WorkerStatusTaskResponse response {.status = std::string(TaskResultTypeToString(result.type))};
     return userver::formats::json::ValueBuilder(response).ExtractValue();
   }
 };
@@ -110,7 +102,7 @@ public:
       const http::HttpRequest& request,
       const userver::formats::json::Value& request_json,
       request::RequestContext& context) const override {
-    const dto::WorkerKillTaskRequest killTaskDto = request_json.As<dto::WorkerKillTaskRequest>();
+    const auto killTaskDto = parseJson<dto::WorkerKillTaskRequest>(request_json);
 
     const auto result = taskProcessor.cancelTaskById(killTaskDto.task_id);
 

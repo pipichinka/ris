@@ -42,6 +42,19 @@ static void generic_md5_task_test(const std::string& hash, const std::string& ex
     }
   }
   ASSERT_EQ(result, expect);
+  result.clear();
+  auto taskMaker = Md5PartMaker(hash, static_cast<std::int64_t>(expect.length()));
+  while (!taskMaker.isDone()) {
+    auto part = taskMaker.nextPart();
+    auto solver = Md5PartSolver(part);
+    auto res = solver.solve();
+    if (res) {
+      result = solver.result();
+      break;
+    }
+  }
+  ASSERT_EQ(result, expect);
+
 }
 
 

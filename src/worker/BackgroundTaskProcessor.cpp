@@ -7,23 +7,6 @@
 #include "userver/utils/async.hpp"
 
 namespace worker {
-
-std::string TaskResultTypeToString(TaskResultType type) {
-  switch (type) {
-    case IN_PROGRESS:
-      return "IN_PROGRESS";
-    case FOUND:
-      return "FOUND";
-    case NOT_FOUND:
-      return "NOT_FOUND";
-    case CANCELED:
-      return "CANCELED";
-    case NO_SUCH_TASK:
-      return "NO_SUCH_TASK";
-  }
-  return "INVALID TYPE";
-}
-
 BackgroundTaskProcessor::BackgroundTaskProcessor(
     const userver::components::ComponentConfig& config,
     const userver::components::ComponentContext& context)
@@ -49,7 +32,7 @@ boost::uuids::uuid* BackgroundTaskProcessor::addTask(const task::Md5Part& t) {
   LOG_INFO() << "adding task " << t;
   currentTaskId = userver::utils::generators::GenerateBoostUuid();
 
-  s->emplace(currentTaskId, TaskResult());
+  s->emplace(currentTaskId, task::TaskResult());
 
   task = std::make_unique<userver::engine::Task>( userver::utils::Async(taskProcessor, "md5 task",
     [this] (const task::Md5Part& task, const TaskId& id)  {
@@ -60,14 +43,14 @@ boost::uuids::uuid* BackgroundTaskProcessor::addTask(const task::Md5Part& t) {
   return new TaskId(currentTaskId);
 }
 
-TaskResult BackgroundTaskProcessor::getTaskResult(const TaskId& id) const {
+task::TaskResult BackgroundTaskProcessor::getTaskResult(const TaskId& id) const {
   LOG_INFO() << "looking for task " << id;
   auto s = storage.SharedLock();
   const auto res = s->find(id);
   if (res == s->end()) {
     LOG_INFO() << "did not find task " << id;
-    TaskResult r;
-    r.type = NO_SUCH_TASK;
+    task::TaskResult r;
+    r.type = task::NO_SUCH_TASK;
     return r;
   }
   LOG_INFO() << "found task "  << res->second;
@@ -101,17 +84,17 @@ void BackgroundTaskProcessor::ProcessTask(const task::Md5Part& t,
   if (r) {
     LOG_INFO() << "found result " << solver.result();
     entry->second.result = solver.result();
-    entry->second.type = FOUND;
+    entry->second.type = task::FOUND;
     return;
   }
 
   if (solver.isCancelled()) {
     LOG_INFO() << "task was canceled";
-    entry->second.type = CANCELED;
+    entry->second.type = task::CANCELED;
     return;
   }
   LOG_INFO() << "result is not found";
-  entry->second.type = NOT_FOUND;
+  entry->second.type = task::NOT_FOUND;
 }
 
 } // worker

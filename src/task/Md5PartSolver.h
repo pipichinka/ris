@@ -25,6 +25,21 @@ inline std::ostream& operator<<(std::ostream& s, const Md5Part& t) {
 
 std::vector<Md5Part> makeMd5Parts(const std::string& hash, std::int64_t len);
 
+
+class Md5PartMaker {
+public:
+  Md5PartMaker(std::string hash, std::int64_t len);
+  Md5PartMaker():done(true) {}
+  Md5Part nextPart();
+  [[nodiscard]] bool isValid() const;
+  [[nodiscard]] bool isDone() const { return done;}
+private:
+  std::string hash;
+  std::vector<std::int64_t> indexString;
+  bool done;
+};
+
+
 class Md5PartSolver{
   public:
   explicit Md5PartSolver(Md5Part&& part);

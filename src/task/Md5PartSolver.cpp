@@ -1,6 +1,7 @@
 #include "Md5PartSolver.h"
 #include <cmath>
 #include <userver/crypto/hash.hpp>
+#include <utility>
 
 #include "userver/engine/async.hpp"
 
@@ -23,14 +24,17 @@ static std::int64_t pow(const std::int64_t base, const std::int64_t exp) {
 }
 
 bool Md5Part::isValid() const {
-  bool res;
-  res = std::all_of(hash.begin(), hash.end(),
-    [] (char digit) { return hash_digits.find(digit) != std::string::npos;} );
+  if (hash.size() != 32)
+    return false;
+
+  bool res = std::all_of(hash.begin(), hash.end(), [](char digit) {
+    return hash_digits.find(digit) != std::string::npos;
+  });
   if (!res) {
     return false;
   }
   res = std::all_of(start.begin(), start.end(),
-    [] (char digit) { return digits.find(digit) != std::string::npos;} );
+    [] (const char digit) { return digits.find(digit) != std::string::npos;} );
 
   if (!res) {
     return false;
@@ -74,12 +78,58 @@ makeMd5Parts(const std::string& hash, std::int64_t len){
     }
   }
 
-  if (len <= 3) {
+  if (len < 3) {
     parts.end()->count = pow(digits_len, len);
   }
 
   return parts;
 }
+
+
+Md5PartMaker::Md5PartMaker(std::string  hash, const std::int64_t len):
+hash(std::move(hash)),
+indexString(len),
+done(false){
+  for (auto i = 0; i < len; i++)
+    indexString[i] = 0;
+}
+
+Md5Part Md5PartMaker::nextPart() {
+  std::int64_t moveToNextDigit = iterationsPerPart;
+  std::string curStart;
+
+  if (done)
+    throw std::runtime_error("can't get next part");
+
+
+  for (const long pos : indexString) {
+    curStart.push_back(digits[pos]);
+  }
+
+  for (std::int64_t pos = static_cast<std::int64_t>(indexString.size()) -1; pos >= 0; --pos) {
+    const std::int64_t curValue = indexString[pos] + moveToNextDigit;
+    indexString[pos] = (curValue) % digits_len;
+    moveToNextDigit = curValue / digits_len;
+    if (moveToNextDigit == 0) {
+      break;
+    }
+  }
+
+  if (moveToNextDigit != 0) {
+    done = true;
+  }
+  if (indexString.size() < 3)
+    return {hash, curStart, pow(digits_len, static_cast<std::int64_t>(indexString.size()))};
+
+  return {hash, curStart, iterationsPerPart};
+}
+
+bool Md5PartMaker::isValid() const {
+  const auto res = std::all_of(hash.begin(), hash.end(),
+   [] (const char digit) { return hash_digits.find(digit) != std::string::npos;} );
+  return res;
+}
+
 
 Md5PartSolver::Md5PartSolver(Md5Part&& part):
   mHash(std::move(part.hash)),

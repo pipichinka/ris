@@ -22,6 +22,14 @@ components:
       type: object
       additionalProperties: false
       properties:
+        task_id:
+          type: string
+          format: uuid
+      required: [ task_id ]
+    ManagerStatusResponse:
+      type: object
+      additionalProperties: false
+      properties:
         result:
           type: string
         status:

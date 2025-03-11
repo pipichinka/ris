@@ -41,15 +41,24 @@ add_library(${PROJECT_NAME}_task OBJECT
 add_library(${PROJECT_NAME}_worker OBJECT
         src/worker/BackgroundTaskProcessor.cpp
         src/worker/WorkerHandlers.cpp
+)
 
+add_library(${PROJECT_NAME}_manager OBJECT
+        src/manager/ManagerState.cpp
+        src/manager/WorkerState.cpp
+        src/manager/ManagerHandlers.cpp
+        src/manager/ManagerHandlers.h
 )
 
 target_link_libraries(${PROJECT_NAME}_task PUBLIC userver::core)
 
 target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core ${PROJECT_NAME}-chgen ${PROJECT_NAME}_task)
+
 target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core ${PROJECT_NAME}_objs)
 target_include_directories(${PROJECT_NAME}_worker PUBLIC src)
 
+target_link_libraries(${PROJECT_NAME}_manager PUBLIC userver::core ${PROJECT_NAME}_objs)
+target_include_directories(${PROJECT_NAME}_manager PUBLIC src)
 
 
 # The Service
@@ -59,6 +68,8 @@ target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 add_executable(worker_service src/worker/main.cpp)
 target_link_libraries(worker_service PRIVATE ${PROJECT_NAME}_worker ${PROJECT_NAME}_task)
 
+add_executable(manager_service src/manager/main.cpp)
+target_link_libraries(manager_service PRIVATE ${PROJECT_NAME}_manager ${PROJECT_NAME}_task)
 
 # Unit Tests
 add_executable(${PROJECT_NAME}_unittest

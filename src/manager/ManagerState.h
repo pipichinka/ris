@@ -58,7 +58,7 @@ private:
   std::unique_ptr<userver::engine::Task> task;
   Queue::element_type::Consumer consumer;
 
-  [[noreturn]] void demonMain();
+  void demonMain();
 
   void updateShortQueue();
 
@@ -72,7 +72,6 @@ private:
 
   void saveTaskResult(const ManagerTask::TaskId& taskId, const std::string& result);
 };
-
 }//namespace manager
 
 

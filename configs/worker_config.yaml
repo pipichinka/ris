@@ -14,7 +14,7 @@ components_manager:
     components:                       # Configuring components that were registered via component_list
         server:
             listener:                 # configuring the main listening socket...
-                port: 8080            # ...to listen on this port and...
+                port: $server-port            # ...to listen on this port and...
                 task_processor: main-task-processor    # ...process incoming requests on this task processor.
         logging:
             fs-task-processor: fs-task-processor
@@ -34,13 +34,6 @@ components_manager:
         testsuite-support: {}
 
         background-task-processor: {}
-
-        http-client:
-            load-enabled: true
-            fs-task-processor: fs-task-processor
-
-        dns-client:
-            fs-task-processor: fs-task-processor
 
         tests-control:
             load-enabled: true
@@ -64,7 +57,7 @@ components_manager:
             task_processor: main-task-processor
         handler-worker-status:
             path: /task/status
-            method: GET
+            method: POST
             task_processor: main-task-processor
         handler-worker-kill:
             path: /task/kill

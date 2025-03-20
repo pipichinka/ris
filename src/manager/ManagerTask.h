@@ -69,5 +69,7 @@ struct WorkerTask {
 };
 
 
+
+
 }
 #endif //MANAGERTASK_H

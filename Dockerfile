@@ -13,7 +13,6 @@ RUN groupadd -r sample && useradd -r -g sample sample
 USER sample
 VOLUME /ris
 WORKDIR /ris
-COPY --from=builder /build/build/ris .
-COPY ./configs/static_config.yaml .
-
-ENTRYPOINT ["./ris", "--config", "static_config.yaml"]
+COPY --from=builder /build/build/worker_service .
+COPY --from=builder /build/build/manager_service .
+COPY configs/* .

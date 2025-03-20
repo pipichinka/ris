@@ -68,11 +68,16 @@ bool ManagerState::addTask(const ManagerTask& task) {
   const auto p = queue->GetProducer();
   auto s = storage.UniqueLock();
   auto res = s->emplace(task.getId(), ManagerTaskResult());
-  if (!res.second)
-    return false;
-  if (!p.Push(ManagerTask(task))) {
+  if (!res.second) {
+    LOG_INFO() << "task wasn't added " << task.getId();
     return false;
   }
+  if (!p.Push(ManagerTask(task))) {
+    s->erase(task.getId());
+    LOG_INFO() << "task wasn't added " << task.getId();
+    return false;
+  }
+  LOG_INFO() << "task is successfully added " << task.getId();
   return true;
 }
 
@@ -85,10 +90,10 @@ std::optional<ManagerTaskResult> ManagerState::getTaskResult(
   return {};
 }
 
-[[noreturn]] void ManagerState::demonMain() {
-  while (true) {
+void ManagerState::demonMain() {
+  while (!userver::engine::current_task::ShouldCancel()) {
     addTasksToWorkers();
-    userver::engine::SleepFor(std::chrono::seconds(1));
+    userver::engine::InterruptibleSleepFor(std::chrono::seconds(1));
     updateWorkerStatuses();
   }
 
@@ -105,6 +110,7 @@ void ManagerState::updateShortQueue() {
       currentTask.emplace(task);
     }
     shortQueue.push_back({currentTask->getNextPart(), currentTask->getId()});
+    LOG_INFO() << "pushing task to short queue task id: " << shortQueue.back().taskId << " part : " << shortQueue.back().part;
   }
 }
 
@@ -137,7 +143,7 @@ void ManagerState::updateWorkerStatuses() {
       }
     }
 
-    if (worker.getLastWorkerStatus() == WorkerState::DEAD) {
+    if (worker.getLastWorkerStatus() == WorkerState::DEAD && worker.getWorkerTask() != nullptr) {
       shortQueue.push_back({worker.getWorkerTask()->taskPart, worker.getWorkerTask()->id});
     }
   }
@@ -172,10 +178,11 @@ void ManagerState::saveTaskResult(const ManagerTask::TaskId& taskId,
   }
   entry->second.type = FOUND;
   entry->second.result = result;
+  LOG_INFO() << "task " << taskId << " result was found" << result;
 }
 
 void ManagerState::checkOnTaskFullComplete(const ManagerTask::TaskId& taskId) {
-  if (currentTask.has_value() && currentTask->getId() == taskId)
+  if (currentTask.has_value() && currentTask->getId() == taskId && !currentTask->isDone())
     return;
 
   for (const auto& workerTask: shortQueue) {
@@ -190,6 +197,7 @@ void ManagerState::checkOnTaskFullComplete(const ManagerTask::TaskId& taskId) {
     return;
   }
   entry->second.type = NOT_FOUND;
+  LOG_INFO() << "task " << taskId << " result was not found";
 }
 
 

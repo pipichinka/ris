@@ -1,10 +1,41 @@
 version: "2.3"
 
 services:
-    ris-container:
-        container_name: main
+    dozzle:
+      image: amir20/dozzle:latest
+      volumes:
+        - /var/run/docker.sock:/var/run/docker.sock
+      ports:
+        - 8000:8080
+    worker-container_0:
+        container_name: worker0
         build:
           context: .
           dockerfile: Dockerfile
         ports:
-          - 8080:8080
+          - 8081:8081
+        entrypoint: ["./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_0.yaml"]
+    worker-container_1:
+      container_name: worker1
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - 8082:8082
+      entrypoint: [ "./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_1.yaml" ]
+    worker-container_2:
+      container_name: worker2
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - 8083:8083
+      entrypoint: [ "./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_2.yaml" ]
+    manager-container:
+      container_name: manager
+      build:
+        context: .
+        dockerfile: Dockerfile
+      ports:
+        - 8080:8080
+      entrypoint: [ "./manager_service", "--config", "manager_config.yaml", "--config_vars", "manager_vars.yaml" ]

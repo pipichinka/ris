@@ -28,11 +28,6 @@ userver_target_generate_chaotic(${PROJECT_NAME}-chgen
         ${CMAKE_CURRENT_SOURCE_DIR}
 )
 
-# Common sources
-add_library(${PROJECT_NAME}_objs OBJECT
-    src/hello.hpp
-    src/hello.cpp
-)
 
 add_library(${PROJECT_NAME}_task OBJECT
         src/task/Md5PartSolver.cpp
@@ -52,18 +47,12 @@ add_library(${PROJECT_NAME}_manager OBJECT
 
 target_link_libraries(${PROJECT_NAME}_task PUBLIC userver::core)
 
-target_link_libraries(${PROJECT_NAME}_objs PUBLIC userver::core ${PROJECT_NAME}-chgen ${PROJECT_NAME}_task)
-
-target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core ${PROJECT_NAME}_objs)
+target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core ${PROJECT_NAME}-chgen  )
 target_include_directories(${PROJECT_NAME}_worker PUBLIC src)
 
-target_link_libraries(${PROJECT_NAME}_manager PUBLIC userver::core ${PROJECT_NAME}_objs)
+target_link_libraries(${PROJECT_NAME}_manager PUBLIC userver::core ${PROJECT_NAME}-chgen  )
 target_include_directories(${PROJECT_NAME}_manager PUBLIC src)
 
-
-# The Service
-add_executable(${PROJECT_NAME} src/main.cpp)
-target_link_libraries(${PROJECT_NAME} PRIVATE ${PROJECT_NAME}_objs)
 
 add_executable(worker_service src/worker/main.cpp)
 target_link_libraries(worker_service PRIVATE ${PROJECT_NAME}_worker ${PROJECT_NAME}_task)
@@ -73,23 +62,15 @@ target_link_libraries(manager_service PRIVATE ${PROJECT_NAME}_manager ${PROJECT_
 
 # Unit Tests
 add_executable(${PROJECT_NAME}_unittest
-        src/hello_test.cpp
         src/tests/md5_task.cpp
 )
 target_include_directories(${PROJECT_NAME}_unittest PUBLIC src)
-target_link_libraries(${PROJECT_NAME}_unittest PRIVATE ${PROJECT_NAME}_objs ${PROJECT_NAME}_task userver::utest)
+target_link_libraries(${PROJECT_NAME}_unittest PRIVATE   ${PROJECT_NAME}_task userver::utest)
 add_google_tests(${PROJECT_NAME}_unittest)
 
 
-# Benchmarks
-add_executable(${PROJECT_NAME}_benchmark
-    src/hello_benchmark.cpp
-)
-target_link_libraries(${PROJECT_NAME}_benchmark PRIVATE ${PROJECT_NAME}_objs userver::ubench)
-add_google_benchmark_tests(${PROJECT_NAME}_benchmark)
-
 # Functional testing
-userver_testsuite_add_simple()
+#userver_testsuite_add_simple()
 
 # Install
 include(GNUInstallDirs)
@@ -100,7 +81,7 @@ if(DEFINED ENV{PREFIX})
   set(CMAKE_INSTALL_PREFIX "${PREFIX_PATH}")
 endif()
 
-file(GLOB CONFIGS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.yaml ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.json)
+#file(GLOB CONFIGS_FILES ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.yaml ${CMAKE_CURRENT_SOURCE_DIR}/configs/*.json)
 
-install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PROJECT_NAME})
-install(FILES ${CONFIGS_FILES} DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME} COMPONENT ${PROJECT_NAME})
+#install(TARGETS ${PROJECT_NAME} DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT ${PROJECT_NAME})
+#install(FILES ${CONFIGS_FILES} DESTINATION ${CMAKE_INSTALL_SYSCONFDIR}/${PROJECT_NAME} COMPONENT ${PROJECT_NAME})

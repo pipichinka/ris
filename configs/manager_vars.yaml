@@ -1,0 +1,7 @@
+workers-addresses:
+  - host: worker-container_0
+    port: 8081
+  - host: worker-container_1
+    port: 8082
+  - host: worker-container_2
+    port: 8083

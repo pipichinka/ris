@@ -10,6 +10,7 @@
 #include "src/dto/worker.hpp"
 #include "task/TaskResult.h"
 #include "userver/formats/json/value_builder.hpp"
+#include "userver/server/http/http_method.hpp"
 namespace manager {
 
 WorkerState::WorkerState(const std::string& host, std::uint16_t port, userver::clients::http::Client& client):
@@ -33,7 +34,9 @@ bool WorkerState::addTask(const WorkerTask& task) {
     .timeout(1000);
 
   try {
+    LOG_INFO() << "adding task to worker " << request.GetUrl() << " with data" << request.GetData();
     const auto res = request.perform();
+    LOG_INFO() << "request is finished " << res->status_code() << " body " << res->body_view();
     if (!res->IsOk()) {
       lastWorkerStatus = DEAD;
       workerTask = nullptr;
@@ -52,6 +55,7 @@ bool WorkerState::addTask(const WorkerTask& task) {
     LOG_WARNING() << "can't send request to worker " << urlBase << " what: " << ex.what();
     lastWorkerStatus = DEAD;
     workerTask = nullptr;
+    return false;
   }
 
   return true;
@@ -68,8 +72,13 @@ void WorkerState::cancelTask() {
     .timeout(1000);
 
   try {
+    LOG_INFO() << "adding task to worker " << request.GetUrl() << " with data" << request.GetData();
     const auto res = request.perform();
+    LOG_INFO() << "request is finished " << res->status_code() << " body " << res->body_view();
     if (!res->IsOk()) {
+      lastWorkerStatus = DEAD;
+      lastTaskResult = nullptr;
+      workerTask = nullptr;
       return;
     }
 
@@ -97,9 +106,13 @@ void WorkerState::updateStatus() {
     .timeout(1000);
 
   try {
+    LOG_INFO() << "adding task to worker " << request.GetUrl() << " with data" << request.GetData();
     const auto res = request.perform();
+    LOG_INFO() << "request is finished " << res->status_code() << " body " << res->body_view();
+
     if (!res->IsOk()) {
       lastWorkerStatus = DEAD;
+      LOG_INFO() << "Worker " << urlBase << " status " << lastWorkerStatus;
       return;
     }
 
@@ -134,7 +147,7 @@ void WorkerState::updateStatus() {
     lastWorkerStatus = DEAD;
     lastTaskResult = nullptr;
   }
-
+  LOG_INFO() << "Worker " << urlBase << " status " << lastWorkerStatus << " task: " << workerTask->taskPart;
 }
 
 } // manager

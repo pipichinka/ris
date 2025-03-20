@@ -75,9 +75,9 @@ public:
       throw handlers::ResourceNotFound(
         DetailedErrorBuilder{"no such task"});
     }
-
+    LOG_INFO() << "task status " << std::string( ManagerTaskResultTypeToString(res.value().type)) << "status id " << res.value().type;
     dto::ManagerStatusResponse response{
-      response.status = std::string( ManagerTaskResultTypeToString(res.value().type))
+      .status = std::string( ManagerTaskResultTypeToString(res.value().type))
     };
 
     if (res.value().type == FOUND) {

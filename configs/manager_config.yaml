@@ -34,17 +34,14 @@ components_manager:
     testsuite-support: {}
 
     manager-state:
-      workers:
-        - host: 127.0.0.1
-          port: 8081
-        - host: 127.0.0.1
-          port: 8082
+      workers: $workers-addresses
 
     http-client:
       fs-task-processor: fs-task-processor
+      dns_resolver: getaddrinfo
 
-    dns-client:
-      fs-task-processor: fs-task-processor
+#    dns-client:
+#      fs-task-processor: fs-task-processor
 
     tests-control:
       load-enabled: true

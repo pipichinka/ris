@@ -1,0 +1,11 @@
+{
+  "rabbitmq_settings": {
+    "rabbitmq": {
+      "hosts": ["rabbitmq"],
+      "port": 5672,
+      "login": "user",
+      "password": "password",
+      "vhost": "/"
+    }
+  }
+}

@@ -8,9 +8,9 @@
 #include <userver/server/handlers/http_handler_base.hpp>
 #include <userver/server/handlers/http_handler_json_base.hpp>
 
-#include "ManagerState.h"
+
+#include "Storage.h"
 #include "userver/components/component_context.hpp"
-#include "userver/utils/log.hpp"
 
 #include "src/dto/manager.hpp"
 #include "utils/HandlerUtils.h"
@@ -20,14 +20,14 @@ using namespace  userver::server;
 
 class TaskSolveHandler final : public handlers::HttpHandlerJsonBase {
 private:
-  ManagerState& managerState;
+  Storage& storage;
 public:
   static constexpr std::string_view kName = "handler-manger-solve";
   using base = HttpHandlerJsonBase;
 
   TaskSolveHandler(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context):
   base(config, context),
-  managerState(context.FindComponent<ManagerState>())
+  storage(context.FindComponent<Storage>())
   {
   }
 
@@ -41,26 +41,24 @@ public:
       throw handlers::ClientError(
         DetailedErrorBuilder{"invalid Md5 task"});
     }
-    if (managerState.addTask(task)) {
-      const dto::ManagerSolveResponse response {task.getId()};
-      return userver::formats::json::ValueBuilder(response).ExtractValue();
-    }
 
-    throw handlers::ConflictError(
-      DetailedErrorBuilder{"can't get more tasks"});
+    storage.addTask(task);
+
+    const dto::ManagerSolveResponse response {task.getId()};
+    return userver::formats::json::ValueBuilder(response).ExtractValue();
   }
 };
 
 class TaskStatusHandler final : public handlers::HttpHandlerJsonBase {
 private:
-  ManagerState& managerState;
+  Storage& storage;
 public:
   static constexpr std::string_view kName = "handler-manger-status";
   using base = HttpHandlerJsonBase;
 
   TaskStatusHandler(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context):
   base(config, context),
-  managerState(context.FindComponent<ManagerState>())
+  storage(context.FindComponent<Storage>())
   {
   }
 
@@ -69,7 +67,7 @@ public:
       const userver::formats::json::Value& request_json,
       request::RequestContext& context) const override {
     const auto statusTaskDto = parseJson<dto::ManagerStatusRequest>(request_json);
-    const auto res = managerState.getTaskResult(statusTaskDto.task_id);
+    const auto res = storage.getTaskResult(statusTaskDto.task_id);
 
     if (!res.has_value()) {
       throw handlers::ResourceNotFound(
@@ -77,6 +75,7 @@ public:
     }
     LOG_INFO() << "task status " << std::string( ManagerTaskResultTypeToString(res.value().type)) << "status id " << res.value().type;
     dto::ManagerStatusResponse response{
+      .result = {},
       .status = std::string( ManagerTaskResultTypeToString(res.value().type))
     };
 

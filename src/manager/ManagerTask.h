@@ -43,6 +43,11 @@ public:
     partMaker(hash, len)
   {}
 
+  ManagerTask(const TaskId& id, const std::string& hash, const std::string& start):
+    id(id),
+    partMaker(hash, start)
+    {}
+
   ManagerTask() : id() {};
 
   [[nodiscard]] const TaskId& getId() const { return id;}
@@ -58,9 +63,11 @@ public:
   [[nodiscard]] bool isValid() const {
     return partMaker.isValid();
   }
+
+  const task::Md5PartMaker& getPartMaker() const {return partMaker;}
 private:
-  TaskId id;
-  task::Md5PartMaker partMaker;
+  TaskId id{};
+  task::Md5PartMaker partMaker{};
 };
 
 struct WorkerTask {

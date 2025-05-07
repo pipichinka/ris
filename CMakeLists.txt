@@ -6,6 +6,10 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(DownloadUserver)
 
 #find_package(userver COMPONENTS core QUIET)
+
+set(USERVER_FEATURE_MONGODB ON)
+set(USERVER_FEATURE_RABBITMQ ON)
+
 if(NOT userver_FOUND)
   # Tries TRY_DIR first, falls back to downloading userver from GitHub using CPM.
   download_userver(TRY_DIR third_party/userver)
@@ -15,11 +19,10 @@ userver_setup_environment()
 
 file(GLOB_RECURSE SCHEMAS ${CMAKE_CURRENT_SOURCE_DIR}/src/dto/*.yaml)
 userver_target_generate_chaotic(${PROJECT_NAME}-chgen
-        ARGS
+        GENERATE_SERIALIZERS
         # Map '/components/schemas/*' JSONSchema types to C++ types in 'dto::' namespace
-        -n "/components/schemas/([^/]*)/=dto::{0}"
-        # Generate serializers for responses
-        --generate-serializers
+        LAYOUT
+        "/components/schemas/([^/]*)/=dto::{0}"
         OUTPUT_DIR
         ${CMAKE_CURRENT_BINARY_DIR}
         SCHEMAS
@@ -39,18 +42,20 @@ add_library(${PROJECT_NAME}_worker OBJECT
 )
 
 add_library(${PROJECT_NAME}_manager OBJECT
-        src/manager/ManagerState.cpp
-        src/manager/WorkerState.cpp
         src/manager/ManagerHandlers.cpp
         src/manager/ManagerHandlers.h
+        src/manager/Storage.cpp
+        src/manager/Storage.h
+        src/manager/TaskConsumer.cpp
+        src/manager/TaskConsumer.h
 )
 
 target_link_libraries(${PROJECT_NAME}_task PUBLIC userver::core)
 
-target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core ${PROJECT_NAME}-chgen  )
+target_link_libraries(${PROJECT_NAME}_worker PUBLIC userver::core ${PROJECT_NAME}-chgen userver::rabbitmq)
 target_include_directories(${PROJECT_NAME}_worker PUBLIC src)
 
-target_link_libraries(${PROJECT_NAME}_manager PUBLIC userver::core ${PROJECT_NAME}-chgen  )
+target_link_libraries(${PROJECT_NAME}_manager PUBLIC userver::core ${PROJECT_NAME}-chgen userver::rabbitmq userver::mongo)
 target_include_directories(${PROJECT_NAME}_manager PUBLIC src)
 
 

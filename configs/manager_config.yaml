@@ -33,15 +33,31 @@ components_manager:
 
     testsuite-support: {}
 
-    manager-state:
-      workers: $workers-addresses
+    dns-client:
+      fs-task-processor: fs-task-processor
 
     http-client:
       fs-task-processor: fs-task-processor
       dns_resolver: getaddrinfo
 
-#    dns-client:
-#      fs-task-processor: fs-task-processor
+    default-secdist-provider: # Component that loads configuration of hosts and passwords
+      config: ./secure_data.json  # Values are supposed to be stored in this file
+      missing-ok: false                            # ... but if the file is missing it is still ok
+
+    rabbitmq:
+      use_secure_connection: false
+    mongo:
+      dbconnection: mongodb://user:admin@mongodb_1:27017,mongodb_2:27017,mongodb_3:27017/database?replicaSet=rs1
+      dns_resolver: getaddrinfo
+
+
+    storage-service:
+
+    consumer-service:
+      queue_add: add
+      queue_add_exchange: add-exchange
+      queue_result: result
+      queue_cancel_exchange: cancel-exchange
 
     tests-control:
       load-enabled: true

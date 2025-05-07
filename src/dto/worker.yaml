@@ -4,6 +4,9 @@ components:
       type: object
       additionalProperties: false
       properties:
+        task_id:
+          type: string
+          format: uuid
         hash:
           type: string
         start:
@@ -12,24 +15,8 @@ components:
           type: integer
           format: int64
           minimum: 0
-      required: [hash, start, count]
-    WorkerLaunchTaskResponse:
-      type: object
-      additionalProperties: false
-      properties:
-        task_id:
-          type: string
-          format: uuid
-      required: [task_id]
-    WorkerStatusTaskRequest:
-      type: object
-      additionalProperties: false
-      properties:
-        task_id:
-          type: string
-          format: uuid
-      required: [task_id]
-    WorkerStatusTaskResponse:
+      required: [hash, start, count, task_id]
+    WorkerTaskResult:
       type: object
       additionalProperties: false
       properties:
@@ -37,7 +24,10 @@ components:
           type: string
         status:
           type: string
-      required: [status]
+        task_id:
+          type: string
+          format: uuid
+      required: [ status, task_id]
     WorkerKillTaskRequest:
       type: object
       additionalProperties: false

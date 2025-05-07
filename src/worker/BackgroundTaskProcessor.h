@@ -8,6 +8,7 @@
 #include "userver/components/component_context.hpp"
 #include "userver/concurrent/variable.hpp"
 #include "userver/engine/shared_mutex.hpp"
+#include "userver/engine/task/task.hpp"
 #include "userver/utils/boost_uuid4.hpp"
 
 #include "task/TaskResult.h"
@@ -28,8 +29,8 @@ public:
 
   explicit BackgroundTaskProcessor(const userver::components::ComponentConfig& config, const userver::components::ComponentContext& context);
   ~BackgroundTaskProcessor() override = default;
-  boost::uuids::uuid* addTask(const task::Md5Part& t);
-  [[nodiscard]] bool cancelTaskById(const TaskId& id);
+  void addTask(const task::Md5Part& t, const TaskId& id);
+  bool cancelTaskById(const TaskId& id);
   [[nodiscard]] task::TaskResult getTaskResult(const TaskId& id) const;
 
 private:

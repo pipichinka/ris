@@ -29,10 +29,13 @@ std::vector<Md5Part> makeMd5Parts(const std::string& hash, std::int64_t len);
 class Md5PartMaker {
 public:
   Md5PartMaker(std::string hash, std::int64_t len);
+  Md5PartMaker(std::string hash, const std::string& start);
   Md5PartMaker():done(true) {}
   Md5Part nextPart();
   [[nodiscard]] bool isValid() const;
   [[nodiscard]] bool isDone() const { return done;}
+  std::string getCurrentStartString() const;
+  std::string getHash() const {return hash;}
 private:
   std::string hash;
   std::vector<std::int64_t> indexString;

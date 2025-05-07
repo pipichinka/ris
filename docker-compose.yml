@@ -7,6 +7,90 @@ services:
         - /var/run/docker.sock:/var/run/docker.sock
       ports:
         - 8000:8080
+    rabbitmq:
+      image: rabbitmq:3.9-management
+      container_name: rabbitmq
+      ports:
+        - "5672:5672"
+        - "15672:15672"
+      volumes:
+        - ./rabbitmq-data:/var/lib/rabbitmq
+      environment:
+        RABBITMQ_DEFAULT_USER: user
+        RABBITMQ_DEFAULT_PASS: password
+      healthcheck:
+        test: [ "CMD", "rabbitmqctl", "status" ]
+        interval: 5s
+        retries: 10
+    mongodb_1:
+      image: mongo:latest
+      hostname: mongodb_1
+      command: --replSet rs1 --keyFile /etc/mongo-replication.key
+      environment:
+        MONGO_INITDB_ROOT_USERNAME: admin
+        MONGO_INITDB_ROOT_PASSWORD: admin
+      ports:
+        - "27017:27017"
+      volumes:
+        - mongodb_data_1:/data/db
+        - ./mongo-replication.key:/etc/mongo-replication.key
+    mongodb_2:
+        image: mongo:latest
+        hostname: mongodb_2
+        command: --replSet rs1 --keyFile /etc/mongo-replication.key
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: admin
+        ports:
+          - "27018:27017"
+        volumes:
+          - mongodb_data_2:/data/db
+          - ./mongo-replication.key:/etc/mongo-replication.key
+        depends_on:
+          - mongodb_1
+
+    mongodb_3:
+        image: mongo:latest
+        hostname: mongodb_3
+        command: --replSet rs1 --keyFile /etc/mongo-replication.key
+        environment:
+          MONGO_INITDB_ROOT_USERNAME: admin
+          MONGO_INITDB_ROOT_PASSWORD: admin
+        ports:
+          - "27019:27017"
+        volumes:
+          - mongodb_data_3:/data/db
+          - ./mongo-replication.key:/etc/mongo-replication.key
+        depends_on:
+          - mongodb_1
+    mongo-init:
+      image: mongo:latest
+      restart: "no"
+      entrypoint: [ "/bin/sh", "-c", "sleep 10 && mongosh --host mongodb_1:27017 --username admin --password admin --authenticationDatabase admin admin /configs/init-replica.js" ]
+      volumes:
+        - ./configs:/configs
+      depends_on:
+        mongodb_1:
+          condition: service_started
+        mongodb_2:
+          condition: service_started
+        mongodb_3:
+          condition: service_started
+    mongo-init-user:
+      image: mongo:latest
+      restart: "no"
+      entrypoint: [ "/bin/sh", "-c", "sleep 30 && mongosh --host mongodb_1,mongodb_2,mongodb_3 --username admin --password admin --authenticationDatabase admin admin /configs/init-user.js" ]
+      volumes:
+        - ./configs:/configs
+      depends_on:
+        mongodb_1:
+          condition: service_started
+        mongodb_2:
+          condition: service_started
+        mongodb_3:
+          condition: service_started
+        mongo-init:
+          condition: service_started
     worker-container_0:
         container_name: worker0
         build:
@@ -15,6 +99,9 @@ services:
         ports:
           - 8081:8081
         entrypoint: ["./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_0.yaml"]
+        depends_on:
+          rabbitmq:
+            condition: service_healthy
     worker-container_1:
       container_name: worker1
       build:
@@ -23,6 +110,9 @@ services:
       ports:
         - 8082:8082
       entrypoint: [ "./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_1.yaml" ]
+      depends_on:
+        rabbitmq:
+          condition: service_healthy
     worker-container_2:
       container_name: worker2
       build:
@@ -31,6 +121,10 @@ services:
       ports:
         - 8083:8083
       entrypoint: [ "./worker_service", "--config", "worker_config.yaml", "--config_vars", "worker_vars_2.yaml" ]
+      depends_on:
+        rabbitmq:
+          condition: service_healthy
+
     manager-container:
       container_name: manager
       build:
@@ -39,3 +133,13 @@ services:
       ports:
         - 8080:8080
       entrypoint: [ "./manager_service", "--config", "manager_config.yaml", "--config_vars", "manager_vars.yaml" ]
+      depends_on:
+        rabbitmq:
+          condition: service_healthy
+        mongo-init-user:
+          condition: service_completed_successfully
+
+volumes:
+  mongodb_data_1:
+  mongodb_data_2:
+  mongodb_data_3:

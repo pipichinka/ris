@@ -4,6 +4,7 @@
 #include <utility>
 
 #include "userver/engine/async.hpp"
+#include "userver/logging/log.hpp"
 
 namespace task{
 
@@ -123,6 +124,24 @@ Md5Part Md5PartMaker::nextPart() {
 
   return {hash, curStart, iterationsPerPart};
 }
+
+std::string Md5PartMaker::getCurrentStartString() const {
+  std::string curStart;
+  for (const long pos : indexString) {
+    curStart.push_back(digits[pos]);
+  }
+  return curStart;
+}
+
+Md5PartMaker::Md5PartMaker(std::string hash, const std::string& start):
+  hash(std::move(hash)),
+  done(false){
+  for (const auto& digit: start) {
+    indexString.push_back(static_cast<int64_t>(digits.find(digit)));
+  }
+}
+
+
 
 bool Md5PartMaker::isValid() const {
   const auto res = std::all_of(hash.begin(), hash.end(),

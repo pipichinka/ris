@@ -15,22 +15,22 @@ BackgroundTaskProcessor::BackgroundTaskProcessor(
       taskProcessor(context.GetTaskProcessor("md5-task-processor")),
       currentTaskId() {}
 
-boost::uuids::uuid* BackgroundTaskProcessor::addTask(const task::Md5Part& t) {
+void BackgroundTaskProcessor::addTask(const task::Md5Part& t, const TaskId& id) {
   if (task != nullptr && !task->IsFinished()) {
     LOG_INFO() << "worker is busy";
-    return nullptr;
+    return;
   }
   auto s = storage.UniqueLock();
 
   if (task != nullptr) {
     if (!task->IsFinished()) {
       LOG_INFO() << "worker is busy";
-      return nullptr;
+      return;
     }
     task = nullptr;
   }
   LOG_INFO() << "adding task " << t;
-  currentTaskId = userver::utils::generators::GenerateBoostUuid();
+  currentTaskId = id;
 
   s->emplace(currentTaskId, task::TaskResult());
 
@@ -40,7 +40,9 @@ boost::uuids::uuid* BackgroundTaskProcessor::addTask(const task::Md5Part& t) {
     },
     t, currentTaskId));
 
-  return new TaskId(currentTaskId);
+  s.GetLock().unlock();
+
+  task->Wait();
 }
 
 task::TaskResult BackgroundTaskProcessor::getTaskResult(const TaskId& id) const {

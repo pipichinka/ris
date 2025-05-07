@@ -1,1 +1,3 @@
 server-port: 8081
+queue-cancel: cancel.worker1
+exchange-result: exchange.result.worker1

@@ -121,11 +121,11 @@ private:
     //making exchange
 
     rabbitClient->DeclareExchange(exchange, userver::urabbitmq::Exchange::Type::kDirect,
-      {userver::urabbitmq::Exchange::Flags::kAutoDelete}, userver::engine::Deadline());
+      {userver::urabbitmq::Exchange::Flags::kAutoDelete, userver::urabbitmq::Exchange::Flags::kDurable}, userver::engine::Deadline());
     rabbitClient->BindQueue(exchange, userver::urabbitmq::Queue(queueResult), queueResult, userver::engine::Deadline());
 
     rabbitClient->DeclareExchange(exchangeCancel, userver::urabbitmq::Exchange::Type::kFanOut,
-          {userver::urabbitmq::Exchange::Flags::kAutoDelete}, userver::engine::Deadline());
+          {userver::urabbitmq::Exchange::Flags::kAutoDelete, userver::urabbitmq::Exchange::Flags::kDurable}, userver::engine::Deadline());
 
     rabbitClient->BindQueue(exchangeCancel, userver::urabbitmq::Queue(queueCancel), queueCancel, userver::engine::Deadline());
 

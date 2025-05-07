@@ -138,11 +138,11 @@ public:
     //making exchange
 
     rabbitClient->DeclareExchange(exchangeAdd, userver::urabbitmq::Exchange::Type::kDirect,
-      {userver::urabbitmq::Exchange::Flags::kAutoDelete}, userver::engine::Deadline());
+      {userver::urabbitmq::Exchange::Flags::kAutoDelete, userver::urabbitmq::Exchange::Flags::kDurable}, userver::engine::Deadline());
     rabbitClient->BindQueue(exchangeAdd, userver::urabbitmq::Queue(queueAdd), queueAdd, userver::engine::Deadline());
 
     rabbitClient->DeclareExchange(exchangeCancel, userver::urabbitmq::Exchange::Type::kFanOut,
-          {userver::urabbitmq::Exchange::Flags::kAutoDelete}, userver::engine::Deadline());
+          {userver::urabbitmq::Exchange::Flags::kAutoDelete, userver::urabbitmq::Exchange::Flags::kDurable}, userver::engine::Deadline());
 
     taskCancelConsumer = std::make_shared<TaskCancelConsumer>(MessagePublisher(exchangeCancel, "", rabbitClient));
     taskResultConsumer = std::make_unique<TaskResultConsumer>(rabbitClient, resultConsumerSettings, storage);

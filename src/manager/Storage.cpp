@@ -110,8 +110,11 @@ ManagerTaskPart Storage::getNextPart() {
      if (!currentTask.has_value() || currentTask->isDone()) {
        auto collection = mongo->GetCollection("task_progress");
        const auto res = collection.FindOne({});
-       if (!res)
+       if (!res) {
+         userver::engine::InterruptibleSleepFor(std::chrono::seconds(1));
          continue;
+       }
+
 
        currentTask = ManagerTask(
          userver::utils::BoostUuidFromString( res.value()["id"].As<std::string>()),
